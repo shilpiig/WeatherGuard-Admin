@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: weatherguard-mongodb
+    ports:
+      - '27017:27017'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: weatherguard
+      MONGO_INITDB_ROOT_PASSWORD: weatherguard_dev_password
+      MONGO_INITDB_DATABASE: weatherguard
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Optional: MongoDB Express for GUI
+  mongo-express:
+    image: mongo-express:latest
+    container_name: weatherguard-mongo-express
+    ports:
+      - '8081:8081'
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: weatherguard
+      ME_CONFIG_MONGODB_ADMINPASSWORD: weatherguard_dev_password
+      ME_CONFIG_MONGODB_URL: mongodb://weatherguard:weatherguard_dev_password@mongodb:27017/
+    depends_on:
+      - mongodb
+
+volumes:
+  mongodb_data:
+    driver: local

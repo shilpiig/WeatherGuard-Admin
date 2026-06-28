@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  api:
+    build: ./api
+    container_name: weatherguard-api
+    ports:
+      - '3001:3001'
+    environment:
+      MONGODB_URI: ${MONGODB_URI}
+      JWT_SECRET: ${JWT_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      GITHUB_CALLBACK_URL: ${GITHUB_CALLBACK_URL}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      OPENWEATHER_API_KEY: ${OPENWEATHER_API_KEY}
+      FRONTEND_URL: ${FRONTEND_URL}
+      PORT: 3001
+      NODE_ENV: production
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+
+  admin:
+    build: ./admin
+    container_name: weatherguard-admin
+    ports:
+      - '3000:80'
+    environment:
+      VITE_API_URL: ${API_URL}
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:7.0
+    container_name: weatherguard-mongodb-prod
+    ports:
+      - '27017:27017'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_INITDB_DATABASE: weatherguard
+    volumes:
+      - mongodb_prod_data:/data/db
+    restart: unless-stopped
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mongodb_prod_data:
+    driver: local
